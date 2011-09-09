@@ -10,7 +10,8 @@ import org.bukkit.block.Block;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public abstract class CraftApplet {
-	public double WIDTH, HEIGHT;
+	public double WIDTH, HEIGHT;//Reference values for developers [ ie point(WIDTH/2, HEIGHT/2); ]
+	private boolean isConstrained;
 	private RectMode rectMode;
 	protected JavaPlugin plugin;
 	private int animationID, calculationID;
@@ -19,6 +20,7 @@ public abstract class CraftApplet {
 
 	public CraftApplet(JavaPlugin instance){
 		this.plugin = instance;
+		this.isConstrained = true;
 		this.rectMode = RectMode.CORNER;
 	}
 
@@ -149,7 +151,7 @@ public abstract class CraftApplet {
 		//double x = xOrigin+xCoor;
 		//double y = yOrigin+yCoor;
 		Location point = screen.getScreenCoordinate(xCoor, yCoor);
-		if(!screen.isPointOnScreen(point))
+		if(isConstrained && !screen.isPointOnScreen(point))
 			return;
 		Block b = world.getBlockAt(point);
 		b.setType(m);
@@ -175,7 +177,7 @@ public abstract class CraftApplet {
 	 * @param height
 	 * 	rectangle height
 	 * @param m
-	 * 	Minecraft material to fill in with
+	 * 	Material to fill in with
 	 */
 	protected void rect(double xVar1, double yVar1, double xVar2, double yVar2, Material m){
 		switch(this.rectMode){
@@ -184,8 +186,7 @@ public abstract class CraftApplet {
 		case CORNER:
 			for(double x = xVar1; x < xVar1+xVar2; x++){
 				for(double y = yVar1; y < yVar1+yVar2; y++){
-					Block b = world.getBlockAt(screen.getScreenCoordinate(x, y));
-					b.setType(m);
+					point(x,y,m);
 				}
 			}
 			break;
@@ -194,8 +195,7 @@ public abstract class CraftApplet {
 		case CORNERS:
 			for(double x = xVar1; x <= xVar2; x++){
 				for(double y = yVar1; y <= yVar2; y++){
-					Block b = world.getBlockAt(screen.getScreenCoordinate(x,y));
-					b.setType(m);
+					point(x,y,m);
 				}
 			}
 			break;
@@ -204,14 +204,27 @@ public abstract class CraftApplet {
 		case CENTER:
 			for(double x = (xVar1-(int)(xVar2/2)); x < xVar1+xVar2; x++){
 				for(double y = (yVar1-(int)(yVar2/2)); y < yVar1+yVar2; y++){
-					Block b = world.getBlockAt(screen.getScreenCoordinate(x,y));
-					b.setType(m);
+					point(x,y,m);
 				}
 			}
 			break;
 		}
 	}
 
+	/**
+	 * Connects two points defined by the user to create a line. Order
+	 * auto-determines how to lay out the line.
+	 * @param xCoor1
+	 * 	X coordinate of one point on the line
+	 * @param yCoor1
+	 * 	Corresponding Y coordinate of the last point
+	 * @param xCoor2
+	 * 	X coordinate of the second point on the line
+	 * @param yCoor2
+	 * 	Corresponding Y coordinate of the last point
+	 * @param m
+	 * 	Material to draw the line with
+	 */
 	protected void line(double xCoor1, double yCoor1, double xCoor2, double yCoor2, Material m){
 		double slope,maxX,minX;
 		maxX = Math.max(xCoor1, xCoor2);
@@ -244,14 +257,36 @@ public abstract class CraftApplet {
 		}
 	}
 
-
+/**
+ * Draws a triangle given 3 coordinate pairs
+ * TODO: Add fill support (only stroke, currently)
+ * @param (all coordinates)
+ * 	X and Y coordinates for each triangle vertex
+ * @param m
+ * 	Material to draw the triangle in
+ */
 protected void triangle(double xCoor1, double yCoor1, double xCoor2, double yCoor2, double xCoor3, double yCoor3, Material m){
 	line(xCoor1, yCoor1, xCoor2, yCoor2, m);
 	line(xCoor2, yCoor2, xCoor3, yCoor3, m);
 	line(xCoor3, yCoor3, xCoor1, yCoor1, m);
 }
 
-//TODO: Make function for determining increment
+/**
+ * Function to display an ellipse on the screen
+ * TODO: Clean up code, and optimize performance
+ * TODO: Add fill support (only stroke, currently)
+ * TODO: Add various EllipseModes
+ * @param xCoor
+ * 	Center x coordinate
+ * @param yCoor
+ * 	center y coordinate
+ * @param width
+ * 	Ellipse width
+ * @param height
+ * 	Ellipse height
+ * @param m
+ * 	Material to 'draw' with
+ */
 protected void ellipse(double xCoor, double yCoor, double width, double height, Material m){
 	double a = width/2;
 	double b = height/2;
@@ -267,11 +302,26 @@ protected void ellipse(double xCoor, double yCoor, double width, double height, 
 	}
 }
 
+/**
+ * 'Fills' the background of the entire screen
+ * @param m
+ * 	Material to fill the background with
+ */
 protected void background(Material m){
 	screen.display(m);
 }
 
+/**
+ * Sets the current constraint state of the screen
+ * @param val
+ * 	Boolean to determine constraint
+ */
+protected void constrain(boolean val){
+	this.isConstrained = val;
+}
+
+/* Deprecated (random test method)
 public void displayScreen(){
 	screen.display(Material.WOOL);
-}
+}*/
 }
